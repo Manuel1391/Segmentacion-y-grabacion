@@ -614,6 +614,7 @@
   border-radius: 12px; /* Mantén el border-radius completo */
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+margin-top: 15px; 
 }
 
 /* Para asegurar que el contenido se vea bien en móviles */
@@ -751,6 +752,42 @@
   color: var(--muted);
   margin-left: auto;
 }
+
+.subtitle-list-container {
+  position: relative;
+  z-index: 101;
+}
+
+.subtitle-list-container.hidden {
+  max-height: 150px; /* Más espacio para que el botón sea visible */
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.subtitle-list-container.hidden .subtitle-list {
+  display: none;
+}
+
+.subtitle-list-container.hidden .selection-controls {
+  display: none;
+}
+
+#toggleSubtitlesBtn {
+  position: relative;
+  z-index: 102;
+  background-color: var(--card) !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.subtitle-list-container > div:nth-child(3) {
+  position: relative;
+  z-index: 103;
+  background-color: var(--card);
+  padding: 8px;
+  border-radius: 6px;
+  margin: 5px 0;
+}
   </style>
 </head>
 <body>
@@ -808,15 +845,23 @@
     </div>
     
     <div class="subtitle-list-container">
-      <label>Subtítulos <span class="small">(selecciona líneas y crea segmentos)</span></label>
-      <div class="selection-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
-        <button id="createSegmentBtn" class="btn-primary" disabled>Crear segmento</button>
-        <button id="clearSelectionBtn" class="btn-ghost">Limpiar selección</button>
-      </div>
-      <div id="subtitleList" class="subtitle-list">
-        <div class="subtitle-placeholder">Los subtítulos aparecerán aquí después de cargarlos</div>
-      </div>
-    </div>
+  <label>Subtítulos <span class="small">(selecciona líneas y crea segmentos)</span></label>
+  <div class="selection-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
+    <button id="createSegmentBtn" class="btn-primary" disabled>Crear segmento</button>
+    <button id="clearSelectionBtn" class="btn-ghost">Limpiar selección</button>
+  </div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; z-index: 102;">
+    <span class="small">Panel de subtítulos</span>
+    <button id="toggleSubtitlesBtn" class="btn-ghost" style="font-size: 12px; padding: 4px 8px; background-color: var(--card);">
+      ▲ Ocultar
+    </button>
+  </div>
+
+  <div id="subtitleList" class="subtitle-list">
+    <div class="subtitle-placeholder">Los subtítulos aparecerán aquí después de cargarlos</div>
+  </div>
+</div>
+      
   </div>
 </section>
 <section class="segments-management">
@@ -1072,6 +1117,9 @@ const avgScoreBar = document.getElementById('avgScoreBar');
 const referenceComparison = document.getElementById('referenceComparison');
 const userComparison = document.getElementById('userComparison');
 
+const toggleSubtitlesBtn = document.getElementById('toggleSubtitlesBtn');
+const subtitleListContainer = document.querySelector('.subtitle-list-container');
+
 // Añadir estas variables con las demás
 const recordBtn = document.getElementById('recordBtn');
 const stopRecordBtn = document.getElementById('stopRecordBtn');
@@ -1165,6 +1213,22 @@ if(importNotesBtn && importNotesInput){
 
   reader.readAsText(f);
 });
+}
+
+let subtitlesVisible = true;
+
+if (toggleSubtitlesBtn && subtitleListContainer) {
+  toggleSubtitlesBtn.addEventListener('click', function() {
+    subtitlesVisible = !subtitlesVisible;
+    
+    if (subtitlesVisible) {
+      subtitleListContainer.classList.remove('hidden');
+      toggleSubtitlesBtn.innerHTML = '▲ Ocultar';
+    } else {
+      subtitleListContainer.classList.add('hidden');
+      toggleSubtitlesBtn.innerHTML = '▼ Mostrar';
+    }
+  });
 }
 
 // === File inputs handling ===
@@ -1896,6 +1960,8 @@ window.addEventListener('keydown',(e)=>{
     else video.pause(); 
   }
 });
+
+
 
 
 // Añadir estos event listeners
