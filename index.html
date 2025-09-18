@@ -619,8 +619,25 @@
 /* Para asegurar que el contenido se vea bien en móviles */
 @media (max-width: 768px) {
   .player {
-    position: relative;
-    top: auto;
+    /* Mantén position: sticky también en móviles */
+    top: 0; /* En móviles puede ir pegado al top */
+    padding: 15px; /* Opcional: reducir padding en móviles */
+  }
+  
+  /* Opcional: ajustar otros elementos para mejor visualización en móviles */
+  .player-wrapper {
+    gap: 12px;
+  }
+  
+  .meta .right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .meta .right button {
+    flex: 1;
+    min-width: 120px;
+    margin: 4px;
   }
 }
 
