@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Listening Practice — Segmentación por Subtítulos</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #60a5fa;
+      --accent-dark: #3b82f6;
+      --muted: #94a3b8;
+      --good: #22c55e;
+      --good-light: rgba(34, 197, 94, 0.15);
+      --bad: #ef4444;
+      --bad-light: rgba(239, 68, 68, 0.15);
+      --warning: #f59e0b;
+      --warning-light: rgba(245, 158, 11, 0.15);
+    }
+    
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+    
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #071428 0%, #071a2a 100%);
+      color: #e6eef8;
+      min-height: 100vh;
+      padding: 22px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
+    }
+    
+    .controls, .player, .feedback {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    input[type=file], select, button, input[type=number] {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #1f2b3b;
+      background: #071829;
+      color: inherit;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    input[type=file]:hover, select:hover, input[type=number]:hover {
+      border-color: var(--accent);
+    }
+    
+    button {
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .player-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+    }
+    
+    .player video {
+      width: 100%;
+      border-radius: 8px;
+      background: black;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .subtitle-list {
+      background: #071829;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .subtitle-item {
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      background: rgba(6, 24, 39, 0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    
+    .subtitle-item:hover {
+      background: rgba(6, 24, 39, 0.8);
+    }
+    
+    .subtitle-item.active {
+      background: rgba(37, 99, 235, 0.15);
+      border-left-color: var(--accent);
+    }
+    
+    .subtitle-time {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    
+    .subtitle-text {
+      font-size: 14px;
+    }
+    
+    .meta {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    
+    .meta .left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .meta .right {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #123145;
+      background: #07141b;
+      color: inherit;
+      resize: vertical;
+      font-size: 15px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .sub-reference {
+      background: #071a26;
+      padding: 14px;
+      border-radius: 8px;
+      margin-top: 8px;
+      line-height: 1.6;
+      min-height: 120px;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .word {
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin: 0 2px;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+    
+    .word.good {
+      background: var(--good-light);
+      color: var(--good);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .word.bad {
+      background: var(--bad-light);
+      color: var(--bad);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      text-decoration: line-through;
+    }
+    
+    .word.partial {
+      background: var(--warning-light);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .score {
+      font-weight: 700;
+    }
+    
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #143142;
+      color: var(--muted);
+      padding: 8px 12px;
+    }
+    
+    .btn-ghost:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: white;
+    }
+    
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+       
+    @media (max-width: 980px) {
+      .grid-3 {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .player-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+      
+      .meta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .meta .right {
+        margin-top: 10px;
+      }
+    }
+    
+    .muted-pill {
+      background: #061827;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(148, 163, 184, 0.08);
+      border-radius: 6px;
+    }
+    
+    .compare-container {
+      margin-top: 20px;
+      background: #071a26;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .compare-header {
+      padding: 12px 16px;
+      background: rgba(6, 24, 39, 0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .compare-body {
+      padding: 16px;
+      line-height: 1.8;
+    }
+    
+    .comparison-row {
+      display: flex;
+      margin-bottom: 16px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .comparison-label {
+      width: 120px;
+      padding: 10px 14px;
+      background: rgba(6, 24, 39, 0.5);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+    
+    .comparison-text {
+      flex: 1;
+      padding: 10px 14px;
+      background: rgba(7, 26, 38, 0.7);
+    }
+    
+    .stats-box {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    .stat-item {
+      background: rgba(6, 24, 39, 0.5);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: #061827;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    
+    .keyboard-shortcuts {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(148, 163, 184, 0.08);
+      border-radius: 6px;
+    }
+    
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+    
+    .shortcut-key {
+      background: rgba(6, 24, 39, 0.7);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+    
+    .score-good {
+      background: var(--good-light);
+      color: var(--good);
+    }
+    
+    .score-medium {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+    
+    .score-poor {
+      background: var(--bad-light);
+      color: var(--bad);
+    }
+
+    .notes-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    
+    .notes-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .notes-label .small {
+      color: var(--accent);
+    }
+    
+    .notes-textarea {
+      min-height: 80px;
+      font-size: 14px;
+    }
+    
+    .save-load-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
+.segments-management {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.segments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.segments-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.segment-item {
+  background: rgba(6, 24, 39, 0.5);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid var(--accent);
+}
+
+.segment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.segment-title {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.segment-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.segment-content {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.segment-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.subtitle-item.selected {
+  background: rgba(37, 99, 235, 0.2);
+  border-left: 3px solid var(--accent);
+}
+
+.subtitle-item input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.segments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  cursor: pointer; /* Añade esto para indicar que es clickeable */
+}
+
+.segments-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#segmentsCount {
+  font-weight: normal;
+  color: var(--muted);
+}
+
+#toggleSegmentsBtn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.subtitle-item.used {
+  opacity: 0.6;
+  background: rgba(6, 24, 39, 0.3);
+  cursor: not-allowed;
+}
+
+.subtitle-item.used input[type="checkbox"] {
+  display: none;
+}
+
+.subtitle-item.used label {
+  cursor: not-allowed;
+}
+
+#toggleSegmentsBtn {
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+#toggleSegmentsBtn:hover {
+  background-color: rgba(96, 165, 250, 0.1);
+}.recording-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.recording-btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.recording-btn.record {
+  background: var(--bad);
+  color: white;
+}
+
+.recording-btn.stop {
+  background: var(--good);
+  color: white;
+}
+
+.recording-btn.play {
+  background: var(--accent);
+  color: white;
+}
+
+.recording-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.recording-status {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.recording-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bad);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.audio-recordings-container {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(6, 24, 39, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.recording-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(6, 24, 39, 0.2);
+  border-radius: 6px;
+}
+
+.recording-item:last-child {
+  margin-bottom: 0;
+}
+
+.recording-number {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 30px;
+}
+
+.recording-audio {
+  flex: 1;
+}
+
+.recording-delete {
+  background: none;
+  border: none;
+  color: var(--bad);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.recording-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.recordings-count {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: auto;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Listening Practice — Segmentación por Subtítulos</h1>
+      <div class="small">Segmentación automática basada en subtítulos con funcionalidad de deshacer</div>
+    </header>
+
+    <section class="controls">
+  <div class="row">
+    <div>
+      <label>Load video (local file)</label>
+      <input id="videoFile" type="file" accept="video/*">
+    </div>
+    <div>
+      <label>Load subtitles (.srt or .vtt)</label>
+      <input id="subsFile" type="file" accept=".srt,.vtt,text/plain">
+    </div>
+    <div>
+      <label>Playback Speed</label>
+      <select id="speedSelect">
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+      </select>
+    </div>
+    <div style="align-self:end">
+      <button id="loadSubsBtn" class="btn-primary">Load Subtitles</button>
+    </div>
+  </div>
+  <div class="hint">Carga un video y su archivo de subtítulos. Selecciona líneas de subtítulos y haz clic en "Crear segmento".</div>
+</section>
+
+   <section class="player">
+  <div class="player-wrapper">
+    <div>
+      <video id="video" controls></video>
+      
+      <div class="meta">
+        <div class="left">
+          <div class="muted-pill" id="segmentInfo">Segment: -</div>
+          <div class="muted-pill" id="timeInfo">0:00 / 0:00</div>
+        </div>
+        <div class="right">
+          <button id="playSegment" class="btn-ghost">Play segment</button>
+          <button id="repeatSegment" class="btn-ghost">Repeat segment</button>
+          <button id="prevSeg" class="btn-ghost">◀ Prev</button>
+          <button id="nextSeg" class="btn-ghost">Next ▶</button>
+          </div>
+      </div>
+    </div>
+    
+    <div class="subtitle-list-container">
+      <label>Subtítulos <span class="small">(selecciona líneas y crea segmentos)</span></label>
+      <div class="selection-controls" style="margin-bottom: 10px; display: flex; gap: 8px;">
+        <button id="createSegmentBtn" class="btn-primary" disabled>Crear segmento</button>
+        <button id="clearSelectionBtn" class="btn-ghost">Limpiar selección</button>
+      </div>
+      <div id="subtitleList" class="subtitle-list">
+        <div class="subtitle-placeholder">Los subtítulos aparecerán aquí después de cargarlos</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="segments-management">
+  <div class="segments-header">
+    <h3>Segmentos Creados <span id="segmentsCount" class="small">(0)</span></h3>
+    <div>
+      <button id="toggleSegmentsBtn" class="btn-ghost" title="Mostrar/ocultar segmentos">▲</button>
+      <button id="saveSegmentsBtn" class="btn-primary">Guardar Segmentación</button>
+      <button id="loadSegmentsBtn" class="btn-ghost">Cargar Segmentación</button>
+      <input type="file" id="loadSegmentsFile" accept=".json" style="display: none;">
+    </div>
+  </div>
+  <div id="segmentsList" class="segments-list" style="display: none;">
+    <div class="empty-state">No hay segmentos creados todavía</div>
+  </div>
+</section>
+
+    <section class="feedback">
+      <div class="grid-3">
+        <div>
+          <label>Transcribe (write what you hear)</label>
+<div class="recording-controls">
+  <button id="recordBtn" class="recording-btn record">🎤 Grabar mi voz</button>
+  <button id="stopRecordBtn" class="recording-btn stop" disabled>⏹️ Parar</button>
+  <div id="recordingStatus" class="recording-status">
+    <span class="recording-indicator" style="display: none;"></span>
+    <span>Listo para grabar</span>
+    <span id="recordingsCount" class="recordings-count">(0/4)</span>
+  </div>
+</div>
+
+<div id="audioRecordingsContainer" class="audio-recordings-container" style="display: none;">
+  <div class="small">Tus grabaciones:</div>
+  <div id="recordingsList">
+    <!-- Las grabaciones se insertarán aquí dinámicamente -->
+  </div>
+</div>
+          <textarea id="userText" placeholder="Write what you heard for the current segment..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="checkBtn" class="btn-primary">Check</button>
+            <button id="clearText" class="btn-ghost">Clear</button>
+          </div>
+
+          <label>Notes (per segment)</label>
+          <textarea id="segmentNote" placeholder="Write notes for this segment..." style="min-height:60px;margin-top:8px"></textarea>
+
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="exportNotes" class="btn-ghost">Export Notes (JSON)</button>
+            <input id="importNotes" type="file" accept="application/json" style="display:none">
+            <button id="importNotesBtn" class="btn-ghost">Import Notes (JSON)</button>
+          </div>
+        </div>
+        
+        <div>
+          <label>Reference subtitles</label>
+          <div id="referenceBox" class="sub-reference small">Reference text will appear here after you press Check</div>
+          
+          <div class="stats-box">
+  <div class="stat-item">
+    <div class="small">Segment Score</div>
+    <div id="segScore" class="stat-value">-</div>
+    <div class="progress-bar">
+      <div id="segScoreBar" class="progress-fill" style="width: 0%; background: var(--accent);"></div>
+    </div>
+  </div>
+  <div class="stat-item">
+    <div class="small">Average Score</div>
+    <div id="avgScore" class="stat-value">-</div>
+    <div class="progress-bar">
+      <div id="avgScoreBar" class="progress-fill" style="width: 0%; background: var(--accent);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AÑADE estas líneas después del stats-box -->
+<div style="margin-top:8px">
+  <div class="small">Worst segments: <span id="worstSegs">-</span></div>
+  <div class="small">Total segments: <span id="totalSegs">0</span></div>
+  <div class="small">Completed: <span id="completedSegs">0</span></div>
+</div>
+          
+               
+        <div>
+          <div class="keyboard-shortcuts">
+            <div class="small" style="font-weight: 600; margin-bottom: 8px;">Keyboard Shortcuts:</div>
+            <div class="shortcut-item">
+              <span>Play/Pause</span>
+              <span class="shortcut-key">Space</span>
+            </div>
+            <div class="shortcut-item">
+              <span>Repeat Segment</span>
+              <span class="shortcut-key">R</span>
+            </div>
+            <div class="shortcut-item">
+              <span>Next Segment</span>
+              <span class="shortcut-key">N</span>
+            </div>
+            <div class="shortcut-item">
+              <span>Previous Segment</span>
+              <span class="shortcut-key">P</span>
+            </div>
+            <div class="shortcut-item">
+              <span>Check (when typing)</span>
+              <span class="shortcut-key">Ctrl+Enter</span>
+            </div>
+            <div class="shortcut-item">
+              <span>Undo</span>
+              <span class="shortcut-key">Ctrl+Z</span>
+            </div>
+          </div>
+          
+          <div class="compare-container">
+            <div class="compare-header">
+              <div style="font-weight: 600;">Text Comparison</div>
+              <div class="small">Word-by-word analysis</div>
+            </div>
+            <div class="compare-body">
+              <div class="comparison-row">
+                <div class="comparison-label">Reference:</div>
+                <div id="referenceComparison" class="comparison-text">Reference text will appear here</div>
+              </div>
+              <div class="comparison-row">
+                <div class="comparison-label">Your Text:</div>
+                <div id="userComparison" class="comparison-text">Your transcribed text will appear here</div>
+              </div>
+              <div class="comparison-row">
+                <div class="comparison-label">Legend:</div>
+                <div class="comparison-text">
+                  <span class="word good">Correct</span>
+                  <span class="word partial">Similar</span>
+                  <span class="word bad">Missing/Incorrect</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(148,163,184,0.1)">
+      Built for local use. If you use YouTube videos, download the mp4 + srt first due to CORS.
+    </footer>
+  </div>
+
+<script>
+// === Utilities ===
+function fmtTime(s){ if(!isFinite(s)) return '0:00'; const m=Math.floor(s/60); const sec=Math.floor(s%60).toString().padStart(2,'0'); return m+':'+sec }
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+
+function levenshtein(a,b){ if(a===b) return 0; const n=a.length, m=b.length; if(n===0) return m; if(m===0) return n; let v0=new Array(m+1), v1=new Array(m+1); for(let j=0;j<=m;j++) v0[j]=j; for(let i=0;i<n;i++){ v1[0]=i+1; for(let j=0;j<m;j++){ const cost = a[i]===b[j] ? 0 : 1; v1[j+1] = Math.min(v1[j]+1, v0[j+1]+1, v0[j]+cost); } let tmp=v0; v0=v1; v1=tmp; } return v0[m]; }
+
+function fuzzyEqualWord(w1,w2){ 
+  if(w1===w2) return {match: true, quality: 'exact'};
+  const d = levenshtein(w1,w2);
+  if(w2.length<=4 && d<=1) return {match: true, quality: 'close'};
+  if(w2.length<=8 && d<=2) return {match: true, quality: 'close'};
+  if(d<=3) return {match: true, quality: 'close'};
+  return {match: false, quality: 'different'};
+}
+
+function lcsFuzzy(aWords, bWords){ 
+  const n=aWords.length, m=bWords.length; 
+  const dp = Array.from({length:n+1},()=>new Array(m+1).fill(0)); 
+  for(let i=1;i<=n;i++){ 
+    for(let j=1;j<=m;j++){ 
+      const matchResult = fuzzyEqualWord(aWords[i-1], bWords[j-1]);
+      if(matchResult.match) dp[i][j] = dp[i-1][j-1]+1;
+      else dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+    } 
+  }
+  let i=n, j=m; const matches=[]; 
+  while(i>0 && j>0){ 
+    const matchResult = fuzzyEqualWord(aWords[i-1], bWords[j-1]);
+    if(matchResult.match){ matches.push({aIndex:i-1, bIndex:j-1, quality: matchResult.quality}); i--; j--; }
+    else if(dp[i-1][j] > dp[i][j-1]) i--;
+    else j--;
+  } 
+  matches.reverse(); 
+  return matches; 
+}
+
+function normalizeText(txt){ 
+  if(!txt) return ''; 
+  txt = txt.replace(/\r/g,' ').replace(/\n/g,' ').trim(); 
+  txt = txt.replace(/[“”„«»]/g,'"'); 
+  txt = txt.toLowerCase(); 
+  txt = txt.replace(/\bI'm\b/gi,'i am'); 
+  txt = txt.replace(/\bcan't\b/gi,'cannot'); 
+  txt = txt.replace(/\bdon't\b/gi,'do not'); 
+  txt = txt.replace(/\bwon't\b/gi,'will not');
+  txt = txt.replace(/[\.,!?;:\(\)\[\]\/\\"\-–—]/g,' ');
+  txt = txt.replace(/\s+/g,' ').trim(); 
+  return txt; 
+}
+function tokenize(txt){ const n=normalizeText(txt); return n? n.split(' ').filter(Boolean) : []; }
+
+// === Subtitle parser (SRT / VTT) ===
+function parseSRT(text, offsetSec=0){ 
+  const out=[]; 
+  const blocks = text.split(/\r?\n\r?\n+/); 
+  for(const b of blocks){ 
+    const lines = b.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); 
+    if(lines.length<2) continue; 
+    for(let i=0;i<lines.length;i++){ 
+      if(lines[i].includes('-->')){ 
+        const timeLine=lines[i];
+        const rest = lines.slice(i+1).join(' ');
+        const match = timeLine.match(/(\d{1,2}:\d{2}:\d{2}[\.,]\d{1,3}|\d{1,2}:\d{2}[\.,]\d{1,3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[\.,]\d{1,3}|\d{1,2}:\d{2}[\.,]\d{1,3})/);
+        if(match){ 
+          const start = parseTimestamp(match[1]) + offsetSec; 
+          const end = parseTimestamp(match[2]) + offsetSec; 
+          out.push({start, end, text: rest}); 
+        }
+        break;
+      }
+    }
+  }
+  return out.sort((a,b)=>a.start-b.start);
+}
+function parseTimestamp(ts){ ts = ts.replace(',', '.'); const parts = ts.split(':').map(Number); if(parts.length===3) return parts[0]*3600 + parts[1]*60 + parts[2]; if(parts.length===2) return parts[0]*60 + parts[1]; return 0; }
+
+// === App state & DOM refs ===
+const video = document.getElementById('video');
+const videoFile = document.getElementById('videoFile');
+const subsFile = document.getElementById('subsFile');
+const loadSubsBtn = document.getElementById('loadSubsBtn');
+const speedSelect = document.getElementById('speedSelect');
+const subtitleList = document.getElementById('subtitleList');
+const createSegmentBtn = document.getElementById('createSegmentBtn');
+const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+const saveSegmentsBtn = document.getElementById('saveSegmentsBtn');
+const loadSegmentsBtn = document.getElementById('loadSegmentsBtn');
+const loadSegmentsFile = document.getElementById('loadSegmentsFile');
+const segmentsList = document.getElementById('segmentsList');
+
+const playSegmentBtn = document.getElementById('playSegment');
+const repeatSegmentBtn = document.getElementById('repeatSegment');
+const prevSegBtn = document.getElementById('prevSeg');
+const nextSegBtn = document.getElementById('nextSeg');
+const segmentInfo = document.getElementById('segmentInfo');
+const timeInfo = document.getElementById('timeInfo');
+
+const userText = document.getElementById('userText');
+const checkBtn = document.getElementById('checkBtn');
+const referenceBox = document.getElementById('referenceBox');
+const segScoreEl = document.getElementById('segScore');
+const avgScoreEl = document.getElementById('avgScore');
+const clearTextBtn = document.getElementById('clearText');
+const segScoreBar = document.getElementById('segScoreBar');
+const avgScoreBar = document.getElementById('avgScoreBar');
+
+// Añadir estas variables con las demás
+const recordBtn = document.getElementById('recordBtn');
+const stopRecordBtn = document.getElementById('stopRecordBtn');
+const recordingStatus = document.getElementById('recordingStatus');
+const recordingIndicator = document.querySelector('.recording-indicator');
+const recordingsCount = document.getElementById('recordingsCount');
+const audioRecordingsContainer = document.getElementById('audioRecordingsContainer');
+const recordingsList = document.getElementById('recordingsList');
+
+let mediaRecorder;
+let audioChunks = [];
+let recordings = []; // Array para almacenar múltiples grabaciones
+
+const referenceComparison = document.getElementById('referenceComparison');
+const userComparison = document.getElementById('userComparison');
+
+// Variables para control de visualización de segmentos
+const toggleSegmentsBtn = document.getElementById('toggleSegmentsBtn');
+const segmentsCount = document.getElementById('segmentsCount');
+let segmentsVisible = false;
+
+// state
+let cues = [];
+let segments = [];
+let currentSegment = 0;
+let scores = [];
+let playingSegment = false;
+let selectedSubtitles = new Set();
+
+// Segment notes
+let segmentNotes = {};
+const segmentNoteEl = document.getElementById('segmentNote');
+const exportNotesBtn = document.getElementById('exportNotes');
+const importNotesInput = document.getElementById('importNotes');
+const importNotesBtn = document.getElementById('importNotesBtn');
+
+// helper: load note to textarea for current segment
+function loadNoteForCurrentSegment(){
+  if(!segmentNoteEl) return;
+  segmentNoteEl.value = segmentNotes[currentSegment] || '';
+}
+
+// save textarea input into segmentNotes
+if(segmentNoteEl){
+  segmentNoteEl.addEventListener('input', () => {
+    segmentNotes[currentSegment] = segmentNoteEl.value;
+  });
+}
+
+// Export notes JSON
+if(exportNotesBtn){
+  exportNotesBtn.addEventListener('click', ()=> {
+    const blob = new Blob([JSON.stringify(segmentNotes, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'listening_segment_notes.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+
+// Import notes JSON
+if(importNotesBtn && importNotesInput){
+  importNotesBtn.addEventListener('click', ()=> importNotesInput.click());
+
+  importNotesInput.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if (typeof data === 'object' && data !== null) {
+        segmentNotes = [];
+
+        for (let i = 0; i < segments.length; i++) {
+          segmentNotes[i] = data[i] ?? '';
+        }
+
+        loadNoteForCurrentSegment();
+        alert('Notes imported successfully.');
+      } else {
+        alert('Invalid JSON format.');
+      }
+    } catch (err) {
+      alert('Error parsing JSON: ' + err.message);
+    }
+  };
+
+  reader.readAsText(f);
+});
+}
+
+// === File inputs handling ===
+videoFile.addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const url = URL.createObjectURL(f);
+  video.src = url;
+  video.load();
+  setTimeout(()=>{ timeInfo.textContent = `0:00 / ${fmtTime(video.duration)}`; updateProgressBars(); },500);
+});
+
+loadSubsBtn.addEventListener('click', () => {
+  const f = subsFile.files[0];
+  if (!f) {
+    alert('Please select a subtitle file first.');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      cues = parseSRT(reader.result, 0);
+      renderSubtitlesList();
+      alert(`Loaded ${cues.length} subtitle cues. Now you can select lines and create segments.`);
+    } catch(err) {
+      alert('Error parsing subtitles: ' + err.message);
+    }
+  };
+  reader.readAsText(f);
+});
+
+// Render subtitles list with checkboxes
+function renderSubtitlesList() {
+  if (!cues.length) {
+    subtitleList.innerHTML = '<div class="subtitle-placeholder">No subtitles loaded</div>';
+    return;
+  }
+  
+  subtitleList.innerHTML = '';
+  cues.forEach((cue, index) => {
+    const item = document.createElement('div');
+    item.className = 'subtitle-item';
+    item.dataset.index = index;
+    
+    // Verificar si este subtítulo ya fue usado en algún segmento
+    const isUsed = isSubtitleUsed(index);
+    if (isUsed) {
+      item.classList.add('used');
+    }
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `sub-${index}`;
+    checkbox.disabled = isUsed; // Deshabilitar checkbox si ya está usado
+    
+    if (!isUsed) {
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          selectedSubtitles.add(index);
+          item.classList.add('selected');
+        } else {
+          selectedSubtitles.delete(index);
+          item.classList.remove('selected');
+        }
+        updateCreateButtonState();
+      });
+    }
+    
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'subtitle-time';
+    timeDiv.textContent = `${fmtTime(cue.start)} → ${fmtTime(cue.end)}`;
+    
+    const textDiv = document.createElement('div');
+    textDiv.className = 'subtitle-text';
+    textDiv.textContent = cue.text;
+    
+    const label = document.createElement('label');
+    label.htmlFor = `sub-${index}`;
+    label.appendChild(timeDiv);
+    label.appendChild(textDiv);
+    
+    if (isUsed) {
+      label.style.cursor = 'not-allowed';
+      const usedBadge = document.createElement('span');
+      usedBadge.className = 'small';
+      usedBadge.style.color = 'var(--muted)';
+      usedBadge.style.marginLeft = '8px';
+      usedBadge.textContent = '(usado)';
+      label.appendChild(usedBadge);
+    }
+    
+    item.appendChild(checkbox);
+    item.appendChild(label);
+    
+    if (!isUsed) {
+      item.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+          checkbox.checked = !checkbox.checked;
+          if (checkbox.checked) {
+            selectedSubtitles.add(index);
+            item.classList.add('selected');
+          } else {
+            selectedSubtitles.delete(index);
+            item.classList.remove('selected');
+          }
+          updateCreateButtonState();
+        }
+      });
+    }
+    
+    subtitleList.appendChild(item);
+  });
+}
+
+// Función para verificar si un subtítulo ya fue usado en algún segmento
+function isSubtitleUsed(subtitleIndex) {
+  for (const segment of segments) {
+    if (segment.subtitleIndices && segment.subtitleIndices.includes(subtitleIndex)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function updateCreateButtonState() {
+  createSegmentBtn.disabled = selectedSubtitles.size === 0;
+}
+
+// Create segment from selected subtitles
+createSegmentBtn.addEventListener('click', () => {
+  if (selectedSubtitles.size === 0) return;
+  
+  // Get selected subtitle indices and sort them
+  const selectedIndices = Array.from(selectedSubtitles).sort((a, b) => a - b);
+  
+  // Verificar que ningún subtítulo seleccionado ya haya sido usado
+  const alreadyUsed = selectedIndices.filter(index => isSubtitleUsed(index));
+  if (alreadyUsed.length > 0) {
+    alert(`Error: ${alreadyUsed.length} subtítulo(s) ya han sido usados en segmentos anteriores.`);
+    return;
+  }
+  
+  // Get the actual subtitle objects
+  const selectedCues = selectedIndices.map(i => cues[i]);
+  
+  // Calculate segment start and end times
+  const start = selectedCues[0].start;
+  const end = selectedCues[selectedCues.length - 1].end;
+  
+  // Combine text from all selected subtitles
+  const text = selectedCues.map(cue => cue.text).join(' ');
+  
+  // Create the segment
+  const segment = {
+    id: segments.length + 1,
+    start,
+    end,
+    reference: text,
+    subtitleIndices: selectedIndices
+  };
+  
+  segments.push(segment);
+  scores.push(null);
+  if(typeof segmentNotes[segments.length - 1] === 'undefined') {
+    segmentNotes[segments.length - 1] = '';
+  }
+  
+  // Clear selection
+  clearSelection();
+  
+  // Update UI
+  renderSubtitlesList(); // Actualizar la lista para marcar como usados
+  renderSegmentsList();
+  updateSegmentUI();
+  
+  alert(`Segmento ${segment.id} creado con ${selectedIndices.length} líneas de subtítulos.`);
+});
+
+// Clear selection
+clearSelectionBtn.addEventListener('click', clearSelection);
+
+function clearSelection() {
+  selectedSubtitles.clear();
+  document.querySelectorAll('.subtitle-item input[type="checkbox"]').forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  document.querySelectorAll('.subtitle-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  updateCreateButtonState();
+}
+
+// Render segments list
+function renderSegmentsList() {
+  if (segments.length === 0) {
+    segmentsList.innerHTML = '<div class="empty-state">No hay segmentos creados todavía</div>';
+    if (segmentsCount) segmentsCount.textContent = '(0)';
+    // Mantener el estado de visibilidad incluso cuando no hay segmentos
+    segmentsList.style.display = 'none';
+    if (toggleSegmentsBtn) {
+      toggleSegmentsBtn.textContent = '▲';
+      toggleSegmentsBtn.title = 'Mostrar segmentos';
+    }
+    segmentsVisible = false;
+    return;
+  }
+  
+  if (segmentsCount) segmentsCount.textContent = `(${segments.length})`;
+  
+  // Preservar el estado de visibilidad actual al renderizar
+  const currentDisplay = segmentsList.style.display;
+  segmentsList.innerHTML = '';
+  
+  segments.forEach((segment, index) => {
+    const item = document.createElement('div');
+    item.className = 'segment-item';
+    
+    const header = document.createElement('div');
+    header.className = 'segment-header';
+    
+    const title = document.createElement('div');
+    title.className = 'segment-title';
+    title.textContent = `Segmento ${segment.id}`;
+    
+    const time = document.createElement('div');
+    time.className = 'segment-time';
+    time.textContent = `${fmtTime(segment.start)} → ${fmtTime(segment.end)}`;
+    
+    header.appendChild(title);
+    header.appendChild(time);
+    
+    const content = document.createElement('div');
+    content.className = 'segment-content';
+    content.textContent = segment.reference;
+    
+    const actions = document.createElement('div');
+    actions.className = 'segment-actions';
+    
+    const playBtn = document.createElement('button');
+    playBtn.className = 'btn-ghost small';
+    playBtn.textContent = 'Reproducir';
+    playBtn.addEventListener('click', () => {
+      currentSegment = index;
+      updateSegmentUI();
+      playSegment(currentSegment);
+    });
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-ghost small';
+    deleteBtn.textContent = 'Eliminar';
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que quieres eliminar este segmento?')) {
+        segments.splice(index, 1);
+        scores.splice(index, 1);
+        renderSubtitlesList(); // Actualizar para quitar marcas de usados
+        renderSegmentsList();
+        updateSegmentUI();
+      }
+    });
+    
+    actions.appendChild(playBtn);
+    actions.appendChild(deleteBtn);
+    
+    item.appendChild(header);
+    item.appendChild(content);
+    item.appendChild(actions);
+    
+    segmentsList.appendChild(item);
+  });
+  
+  // Restaurar el estado de visibilidad después de renderizar
+  segmentsList.style.display = currentDisplay;
+}
+
+// Función para toggle de visualización de segmentos
+if (toggleSegmentsBtn) {
+  toggleSegmentsBtn.addEventListener('click', function(e) {
+    e.stopPropagation(); // Prevenir que el evento se propague al header
+    toggleSegmentsVisibility();
+  });
+}
+
+// Función para toggle al hacer clic en el header
+const segmentsHeader = document.querySelector('.segments-header');
+if (segmentsHeader) {
+  segmentsHeader.addEventListener('click', function(e) {
+    // Solo actuar si no se hizo clic en un botón específico
+    if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+      toggleSegmentsVisibility();
+    }
+  });
+}
+
+// Función central para mostrar/ocultar segmentos
+function toggleSegmentsVisibility() {
+  segmentsVisible = !segmentsVisible;
+  
+  if (segmentsVisible) {
+    segmentsList.style.display = 'flex';
+    if (toggleSegmentsBtn) {
+      toggleSegmentsBtn.textContent = '▼';
+      toggleSegmentsBtn.title = 'Ocultar segmentos';
+    }
+  } else {
+    segmentsList.style.display = 'none';
+    if (toggleSegmentsBtn) {
+      toggleSegmentsBtn.textContent = '▲';
+      toggleSegmentsBtn.title = 'Mostrar segmentos';
+    }
+  }
+}
+
+// Save segments to JSON
+saveSegmentsBtn.addEventListener('click', () => {
+  if (segments.length === 0) {
+    alert('No hay segmentos para guardar.');
+    return;
+  }
+  
+  const data = {
+    segments,
+    videoSrc: video.src,
+    cuesCount: cues.length
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'segmentation.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  alert('Segmentación guardada correctamente.');
+});
+
+// Load segments from JSON
+loadSegmentsBtn.addEventListener('click', () => {
+  loadSegmentsFile.click();
+});
+
+loadSegmentsFile.addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      
+      if (data.segments && Array.isArray(data.segments)) {
+        segments = data.segments;
+        scores = new Array(segments.length).fill(null);
+        
+        // Inicializar notas para los nuevos segmentos
+        for (let i = 0; i < segments.length; i++) {
+          if (typeof segmentNotes[i] === 'undefined') {
+            segmentNotes[i] = '';
+          }
+        }
+        
+        // Resetear visibilidad al cargar nuevos segmentos
+        segmentsVisible = false;
+        segmentsList.style.display = 'none';
+        if (toggleSegmentsBtn) {
+          toggleSegmentsBtn.textContent = '▲';
+          toggleSegmentsBtn.title = 'Mostrar segmentos';
+        }
+        
+        renderSubtitlesList();
+        renderSegmentsList();
+        currentSegment = 0;
+        updateSegmentUI();
+        alert(`Segmentación cargada: ${segments.length} segmentos.`);
+      } else {
+        alert('Formato de archivo inválido.');
+      }
+    } catch(err) {
+      alert('Error al cargar la segmentación: ' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsText(f);
+});
+
+// Update UI for current segment
+function updateSegmentUI() {
+  if (!segments.length) {
+    segmentInfo.textContent = 'Segment: -';
+    if (referenceComparison) referenceComparison.textContent = 'Reference text will appear here';
+    if (userComparison) userComparison.textContent = 'Your transcribed text will appear here';
+    segScoreEl.textContent = '-';
+    avgScoreEl.textContent = '-';
+    timeInfo.textContent = fmtTime(video.currentTime) + ' / ' + fmtTime(video.duration);
+    updateProgressBars();
+    updateCompletedSegs(); // Añadir esta línea
+    return;
+  }
+
+  const seg = segments[currentSegment];
+  segmentInfo.textContent = `Segment ${currentSegment + 1} of ${segments.length} — ${fmtTime(seg.start)} → ${fmtTime(seg.end)}`;
+if (segmentsCount) segmentsCount.textContent = `(${segments.length})`;
+timeInfo.textContent = fmtTime(video.currentTime) + ' / ' + fmtTime(video.duration);
+
+  if (referenceBox) referenceBox.textContent = '(Reference text will appear after you press Check)';
+  userText.value = '';
+
+  if (segmentNoteEl) {
+    segmentNoteEl.value = segmentNotes[currentSegment] || '';
+  }
+
+  segScoreEl.textContent = scores[currentSegment] === null ? '-' : (scores[currentSegment].toFixed(0) + '%');
+
+  if (scores[currentSegment] !== null) {
+    let scoreClass = 'score-poor';
+    if (scores[currentSegment] >= 80) scoreClass = 'score-good';
+    else if (scores[currentSegment] >= 50) scoreClass = 'score-medium';
+
+    segmentInfo.innerHTML = `Segment ${currentSegment + 1} of ${segments.length} — ${fmtTime(seg.start)} → ${fmtTime(seg.end)}` +
+      `<span class="score-badge ${scoreClass}">${scores[currentSegment].toFixed(0)}%</span>`;
+  }
+
+  const validScores = scores.filter(s => typeof s === 'number');
+  const avgScore = validScores.length ? (validScores.reduce((a, b) => a + b, 0) / validScores.length) : 0;
+  avgScoreEl.textContent = validScores.length ? avgScore.toFixed(0) + '%' : '-';
+
+  updateProgressBars();
+  updateCompletedSegs(); // Asegurarse de que se llama aquí también
+}
+
+function updateProgressBars() {
+  if (!scores.length) { segScoreBar.style.width='0%'; avgScoreBar.style.width='0%'; return; }
+  if (scores[currentSegment] !== null) {
+    segScoreBar.style.width = `${scores[currentSegment]}%`;
+    if (scores[currentSegment] >= 80) segScoreBar.style.background = 'var(--good)';
+    else if (scores[currentSegment] >= 50) segScoreBar.style.background = 'var(--warning)';
+    else segScoreBar.style.background = 'var(--bad)';
+  } else segScoreBar.style.width = '0%';
+
+  const validScores = scores.filter(s=>typeof s==='number');
+  const avgScore = validScores.length ? (validScores.reduce((a,b)=>a+b,0)/validScores.length) : 0;
+  if (validScores.length) {
+    avgScoreBar.style.width = `${avgScore}%`;
+    if (avgScore >= 80) avgScoreBar.style.background = 'var(--good)';
+    else if (avgScore >= 50) avgScoreBar.style.background = 'var(--warning)';
+    else avgScoreBar.style.background = 'var(--bad)';
+  } else avgScoreBar.style.width = '0%';
+}
+
+function updateCompletedSegs() {
+  const completed = scores.filter(s => s !== null).length;
+  const completedSegsEl = document.getElementById('completedSegs');
+  const totalSegsEl = document.getElementById('totalSegs');
+  const worstSegsEl = document.getElementById('worstSegs');
+  
+  if (completedSegsEl) completedSegsEl.textContent = `${completed} / ${segments.length}`;
+  if (totalSegsEl) totalSegsEl.textContent = segments.length;
+  
+  // Actualizar worst segments
+  if (worstSegsEl) {
+    const validScores = scores.filter(s => typeof s === 'number');
+    if (!validScores.length) {
+      worstSegsEl.textContent = '-';
+    } else {
+      const arr = scores.map((s, i) => ({ s, i })).filter(o => typeof o.s === 'number');
+      arr.sort((a, b) => a.s - b.s);
+      const worst = arr.slice(0, 3).map(o => `#${o.i + 1}:${o.s.toFixed(0)}%`);
+      worstSegsEl.textContent = worst.join(', ');
+    }
+  }
+}
+
+// playback controls (save note before changing segment)
+playSegmentBtn.addEventListener('click', ()=>{ playSegment(currentSegment); });
+repeatSegmentBtn.addEventListener('click', ()=>{ playSegment(currentSegment); });
+prevSegBtn.addEventListener('click', ()=>{ 
+  if(currentSegment>0) {
+    if (segmentNoteEl) segmentNotes[currentSegment] = segmentNoteEl.value;
+    clearRecording();
+    currentSegment--; updateSegmentUI(); playSegment(currentSegment);
+  }
+});
+
+nextSegBtn.addEventListener('click', ()=>{ 
+  if(currentSegment<segments.length-1) {
+    if (segmentNoteEl) segmentNotes[currentSegment] = segmentNoteEl.value;
+    clearRecording();
+    currentSegment++; updateSegmentUI(); playSegment(currentSegment);
+  }
+});
+
+speedSelect.addEventListener('change', (e) => { video.playbackRate = parseFloat(e.target.value); });
+
+function playSegment(idx){
+  if(!segments.length) return;
+  const seg = segments[idx];
+  video.currentTime = clamp(seg.start,0,video.duration-0.001);
+  playingSegment = true;
+  video.play();
+}
+
+video.addEventListener('timeupdate', ()=>{
+  if(!segments.length) return;
+  const seg = segments[currentSegment];
+  if(!seg) return;
+  timeInfo.textContent = fmtTime(video.currentTime)+' / '+fmtTime(video.duration);
+  if(video.currentTime >= seg.end - 0.05 && playingSegment){ video.pause(); playingSegment=false; }
+});
+video.addEventListener('ended', ()=>{ playingSegment=false; });
+
+// Check (compare) logic
+checkBtn.addEventListener('click', () => {
+  if (!segments.length) { 
+    alert('No segments. Create segments first.'); 
+    return; 
+  }
+
+  const seg = segments[currentSegment];
+  const reference = seg.reference || '';
+  const refWords = tokenize(reference);
+
+  const userTextBefore = userText.value;
+  const userWords = tokenize(userTextBefore);
+
+  if (!reference) {
+    referenceBox.innerHTML = '<em class="small">No subtitles for this segment — cannot score.</em>';
+    referenceComparison.textContent = 'No reference text available';
+    userComparison.textContent = userTextBefore || 'No text entered';
+    scores[currentSegment] = null;
+    updateSegmentUI();
+    return;
+  }
+
+  const matches = lcsFuzzy(refWords, userWords);
+  const matchedRefIndices = new Set(matches.map(m => m.aIndex));
+  const matchQuality = {};
+  matches.forEach(m => { matchQuality[m.aIndex] = m.quality; });
+
+  const refHtml = refWords.map((w,i) => {
+    if (matchedRefIndices.has(i)) {
+      const quality = matchQuality[i];
+      return `<span class="word ${quality === 'exact' ? 'good' : 'partial'}">${escapeHtml(w)}</span>`;
+    } else {
+      return `<span class="word bad">${escapeHtml(w)}</span>`;
+    }
+  }).join(' ');
+
+  const userMatchIndices = new Set(matches.map(m => m.bIndex));
+  const userHtml = userWords.map((w,i) => {
+    if (userMatchIndices.has(i)) {
+      const match = matches.find(m => m.bIndex === i);
+      const quality = match ? match.quality : 'exact';
+      return `<span class="word ${quality === 'exact' ? 'good' : 'partial'}">${escapeHtml(w)}</span>`;
+    } else {
+      return `<span class="word bad">${escapeHtml(w)}</span>`;
+    }
+  }).join(' ');
+
+  const matchedCount = matchedRefIndices.size;
+  const score = refWords.length ? (matchedCount / refWords.length * 100) : 0;
+  scores[currentSegment] = score;
+
+  updateSegmentUI();
+
+  referenceBox.textContent = reference;
+  referenceComparison.innerHTML = refHtml;
+  userComparison.innerHTML = userHtml;
+  userText.value = userTextBefore;
+  segScoreEl.textContent = score.toFixed(0) + '%';
+});
+
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// clear text button
+if (clearTextBtn){
+  clearTextBtn.addEventListener('click', ()=>{ userText.value=''; });
+}
+
+// Ctrl+Enter to check
+userText.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); checkBtn.click(); } });
+
+// video metadata / seek updates
+video.addEventListener('loadedmetadata', ()=>{ timeInfo.textContent = fmtTime(video.currentTime)+' / '+fmtTime(video.duration); });
+video.addEventListener('seeked', ()=>{ timeInfo.textContent = fmtTime(video.currentTime)+' / '+fmtTime(video.duration); });
+
+// Añadir estas funciones después de las existentes
+async function startRecording() {
+  if (recordings.length >= 4) {
+    alert('Máximo 4 grabaciones por segmento alcanzado.');
+    return;
+  }
+  
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    
+    mediaRecorder = new MediaRecorder(stream);
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Añadir la grabación al array
+      recordings.push({
+        blob: audioBlob,
+        url: audioUrl,
+        timestamp: new Date().toLocaleTimeString()
+      });
+      
+      updateRecordingsUI();
+      updateRecordingStatus();
+      
+      recordBtn.disabled = false;
+      stopRecordBtn.disabled = true;
+      recordingStatus.querySelector('span:nth-child(2)').textContent = 'Grabación completada';
+      recordingIndicator.style.display = 'none';
+    };
+    
+    mediaRecorder.start();
+    recordBtn.disabled = true;
+    stopRecordBtn.disabled = false;
+    recordingStatus.querySelector('span:nth-child(2)').textContent = 'Grabando...';
+    recordingIndicator.style.display = 'block';
+    
+  } catch (error) {
+    alert('Error al acceder al micrófono: ' + error.message);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+  }
+}
+
+function updateRecordingsUI() {
+  recordingsList.innerHTML = '';
+  
+  if (recordings.length === 0) {
+    audioRecordingsContainer.style.display = 'none';
+    return;
+  }
+  
+  audioRecordingsContainer.style.display = 'block';
+  
+  recordings.forEach((recording, index) => {
+    const recordingItem = document.createElement('div');
+    recordingItem.className = 'recording-item';
+    
+    recordingItem.innerHTML = `
+      <div class="recording-number">#${index + 1}</div>
+      <audio class="recording-audio" controls src="${recording.url}" style="width: 200px;"></audio>
+      <button class="recording-delete" data-index="${index}">🗑️</button>
+    `;
+    
+    recordingsList.appendChild(recordingItem);
+  });
+  
+  // Añadir event listeners para los botones de eliminar
+  document.querySelectorAll('.recording-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.target.dataset.index);
+      deleteRecording(index);
+    });
+  });
+}
+
+function updateRecordingStatus() {
+  recordingsCount.textContent = `(${recordings.length}/4)`;
+  
+  if (recordings.length >= 4) {
+    recordBtn.disabled = true;
+    recordBtn.title = 'Máximo de grabaciones alcanzado';
+  } else {
+    recordBtn.disabled = false;
+    recordBtn.title = '';
+  }
+}
+
+function deleteRecording(index) {
+  // Liberar URL del objeto
+  URL.revokeObjectURL(recordings[index].url);
+  
+  // Eliminar del array
+  recordings.splice(index, 1);
+  
+  // Actualizar UI
+  updateRecordingsUI();
+  updateRecordingStatus();
+}
+
+function clearAllRecordings() {
+  // Liberar todas las URLs
+  recordings.forEach(recording => {
+    URL.revokeObjectURL(recording.url);
+  });
+  
+  // Limpiar array
+  recordings = [];
+  
+  // Actualizar UI
+  updateRecordingsUI();
+  updateRecordingStatus();
+}
+
+
+// keyboard shortcuts
+window.addEventListener('keydown',(e)=>{
+  if ((document.activeElement === userText || document.activeElement === segmentNoteEl) 
+      && !(e.ctrlKey && e.key === 'Enter')) {
+    return;
+  }
+
+  if(e.key==='r') repeatSegmentBtn.click();
+  if(e.key==='n'){ e.preventDefault(); nextSegBtn.click(); }
+  if(e.key==='p') prevSegBtn.click();
+  if(e.key===' '){ 
+    e.preventDefault(); 
+    if(video.paused) video.play(); 
+    else video.pause(); 
+  }
+});
+
+// Añadir estos event listeners
+recordBtn.addEventListener('click', startRecording);
+stopRecordBtn.addEventListener('click', stopRecording);
+
+// Limpiar grabaciones al cambiar de segmento
+function clearRecording() {
+  clearAllRecordings();
+}
+
+// Modificar las funciones de cambio de segmento para incluir clearRecording()
+
+// Initialize UI
+updateSegmentUI();
+</script>
+</body>
+</html>
