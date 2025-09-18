@@ -601,7 +601,28 @@
 
 #toggleSegmentsBtn:hover {
   background-color: rgba(96, 165, 250, 0.1);
-}.recording-controls {
+}
+
+.player {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 0 0 12px 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Para asegurar que el contenido se vea bien en móviles */
+@media (max-width: 768px) {
+  .player {
+    position: relative;
+    top: auto;
+  }
+}
+
+.recording-controls {
   display: flex;
   gap: 10px;
   margin-top: 12px;
@@ -748,7 +769,7 @@
   <div class="hint">Carga un video y su archivo de subtítulos. Selecciona líneas de subtítulos y haz clic en "Crear segmento".</div>
 </section>
 
-   <section class="player">
+   <section class="player" id="stickyPlayer">
   <div class="player-wrapper">
     <div>
       <video id="video" controls></video>
@@ -798,6 +819,8 @@
       <div class="grid-3">
         <div>
           <label>Transcribe (write what you hear)</label>
+          <textarea id="userText" placeholder="Write what you heard for the current segment..."></textarea>
+<!-- Añadir después del textarea -->
 <div class="recording-controls">
   <button id="recordBtn" class="recording-btn record">🎤 Grabar mi voz</button>
   <button id="stopRecordBtn" class="recording-btn stop" disabled>⏹️ Parar</button>
@@ -814,7 +837,6 @@
     <!-- Las grabaciones se insertarán aquí dinámicamente -->
   </div>
 </div>
-          <textarea id="userText" placeholder="Write what you heard for the current segment..."></textarea>
           <div style="display:flex;gap:8px;margin-top:12px">
             <button id="checkBtn" class="btn-primary">Check</button>
             <button id="clearText" class="btn-ghost">Clear</button>
@@ -1028,6 +1050,9 @@ const clearTextBtn = document.getElementById('clearText');
 const segScoreBar = document.getElementById('segScoreBar');
 const avgScoreBar = document.getElementById('avgScoreBar');
 
+const referenceComparison = document.getElementById('referenceComparison');
+const userComparison = document.getElementById('userComparison');
+
 // Añadir estas variables con las demás
 const recordBtn = document.getElementById('recordBtn');
 const stopRecordBtn = document.getElementById('stopRecordBtn');
@@ -1040,9 +1065,6 @@ const recordingsList = document.getElementById('recordingsList');
 let mediaRecorder;
 let audioChunks = [];
 let recordings = []; // Array para almacenar múltiples grabaciones
-
-const referenceComparison = document.getElementById('referenceComparison');
-const userComparison = document.getElementById('userComparison');
 
 // Variables para control de visualización de segmentos
 const toggleSegmentsBtn = document.getElementById('toggleSegmentsBtn');
@@ -1856,6 +1878,33 @@ window.addEventListener('keydown',(e)=>{
   }
 });
 
+// Añade esto al final del código JavaScript
+// Control de sticky player en scroll
+let lastScrollTop = 0;
+const stickyPlayer = document.getElementById('stickyPlayer');
+
+window.addEventListener('scroll', function() {
+  if (window.innerWidth <= 768) return; // No aplicar en móviles
+  
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  
+  if (scrollTop > lastScrollTop && scrollTop > 100) {
+    // Scrolling down - ocultar suavemente
+    stickyPlayer.style.transform = 'translateY(-100%)';
+    stickyPlayer.style.transition = 'transform 0.3s ease';
+  } else {
+    // Scrolling up - mostrar
+    stickyPlayer.style.transform = 'translateY(0)';
+  }
+  
+  lastScrollTop = scrollTop;
+});
+
+// Resetear transformación al hacer hover para mejor usabilidad
+stickyPlayer.addEventListener('mouseenter', function() {
+  this.style.transform = 'translateY(0)';
+});
+
 // Añadir estos event listeners
 recordBtn.addEventListener('click', startRecording);
 stopRecordBtn.addEventListener('click', stopRecording);
@@ -1864,8 +1913,6 @@ stopRecordBtn.addEventListener('click', stopRecording);
 function clearRecording() {
   clearAllRecordings();
 }
-
-// Modificar las funciones de cambio de segmento para incluir clearRecording()
 
 // Initialize UI
 updateSegmentUI();
