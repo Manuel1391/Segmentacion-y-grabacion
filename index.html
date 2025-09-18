@@ -25,18 +25,20 @@
     }
     
     body {
-      margin: 0;
-      background: linear-gradient(180deg, #071428 0%, #071a2a 100%);
-      color: #e6eef8;
-      min-height: 100vh;
-      padding: 22px;
-      line-height: 1.6;
-    }
+  margin: 0;
+  background: linear-gradient(180deg, #071428 0%, #071a2a 100%);
+  color: #e6eef8;
+  min-height: 100vh;
+  padding: 22px;
+  line-height: 1.6;
+  overflow-x: hidden; /* Añade esto */
+}
     
     .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative; /* Añade esto */
+}
     
     header {
       display: flex;
@@ -605,11 +607,11 @@
 
 .player {
   position: sticky;
-  top: 0;
+  top: 20px; /* Cambia de 0 a 20px para que no se pegue al borde superior */
   z-index: 100;
   background: var(--card);
   padding: 20px;
-  border-radius: 0 0 12px 12px;
+  border-radius: 12px; /* Mantén el border-radius completo */
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -1878,32 +1880,6 @@ window.addEventListener('keydown',(e)=>{
   }
 });
 
-// Añade esto al final del código JavaScript
-// Control de sticky player en scroll
-let lastScrollTop = 0;
-const stickyPlayer = document.getElementById('stickyPlayer');
-
-window.addEventListener('scroll', function() {
-  if (window.innerWidth <= 768) return; // No aplicar en móviles
-  
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  
-  if (scrollTop > lastScrollTop && scrollTop > 100) {
-    // Scrolling down - ocultar suavemente
-    stickyPlayer.style.transform = 'translateY(-100%)';
-    stickyPlayer.style.transition = 'transform 0.3s ease';
-  } else {
-    // Scrolling up - mostrar
-    stickyPlayer.style.transform = 'translateY(0)';
-  }
-  
-  lastScrollTop = scrollTop;
-});
-
-// Resetear transformación al hacer hover para mejor usabilidad
-stickyPlayer.addEventListener('mouseenter', function() {
-  this.style.transform = 'translateY(0)';
-});
 
 // Añadir estos event listeners
 recordBtn.addEventListener('click', startRecording);
